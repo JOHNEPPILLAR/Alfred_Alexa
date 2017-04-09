@@ -1,0 +1,26 @@
+{
+  "name": "alfred-skill",
+  "version": "1.0.0",
+  "description": "Alfred Alex skill for home digital assistant.",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+   "repository": {
+    "type": "git",
+    "url": "https://github.com/JOHNEPPILLAR/Alfred_Alexa.git"
+  },
+  "keywords": [
+    "alexa",
+    "skill",
+    "home digital assistant"
+  ],
+  "author": "JP",
+  "license": "ISC",
+  "dependencies": {
+    "alexa-sdk": "*",
+    "dotenv": "*",
+    "request": "*",
+    "request-promise": "*"
+  }
+}
