@@ -4,6 +4,9 @@
       "intent": "HelloIntent"
     },
     {
+      "intent": "NewsIntent"
+    },
+    {
       "intent": "AMAZON.HelpIntent"
     },
     {
