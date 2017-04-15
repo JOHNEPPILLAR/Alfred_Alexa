@@ -16,6 +16,7 @@ function processRequest(req, res, next) {
             console.error("Error: " + error);
         } else {
             if (typeof req.query.input !== 'undefined' && req.query.input !== null) {
+                console.log('Asking the alexa skill: ' + req.query.input);
                 alexa.spoken(req.query.input, function (error, response, request) {
                     if (typeof error !== 'undefined' && error !== null) {
                         res.send(error);  
@@ -32,7 +33,7 @@ function processRequest(req, res, next) {
 };
 
 // Setup lambda skill server
-server = new bst.LambdaServer('../src/index.js', 10000, true),
+server = new bst.LambdaServer('./src/index.js', 10000, true),
 alexa  = new bst.BSTAlexa('http://localhost:10000?disableSignatureCheck=true', './speechAssets/IntentSchema.json','./speechAssets/SampleUtterances.txt','JP');
 // Start the Alexa skill under the lambda server
 server.start(function () {
@@ -55,6 +56,7 @@ APIserver.use(restify.fullResponse());
 // Map the root to processReauest function for processing
 APIserver.get('/', processRequest);
 // Start server and listen to messqges
-APIserver.listen(process.env.PORT, function() {
-   console.log('%s listening to %s', APIserver.name, APIserver.url);
+//APIserver.listen(process.env.PORT, function() {
+APIserver.listen(3977, function() {
+   console.log('Alexa local skill test server listening to %s', APIserver.name, APIserver.url);
 });

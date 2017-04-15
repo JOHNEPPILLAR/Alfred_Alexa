@@ -1,16 +1,19 @@
 {
   "intents": [
-    {
-      "intent": "HelloIntent"
-    },
-    {
-      "intent": "AMAZON.HelpIntent"
-    },
-    {
-      "intent": "AMAZON.StopIntent"
-    },
-    {
-      "intent": "AMAZON.CancelIntent"
-    }
+    { "intent": "HelloIntent" },
+    { "intent": "HelpIntent" },
+    { "intent": "AMAZON.HelpIntent" },
+
+    { "intent": "JokeIntent" },
+    { "intent": "LightsIntent" },
+    { "intent": "NewsIntent", "slots": [{"name" : "newstype", "type": "newstypes"}] },
+    { "intent": "SearchIntent" },
+    { "intent": "TimeIntent" },
+    { "intent": "TravelIntent" },
+    { "intent": "TVIntent" },
+    { "intent": "WeatherIntent" },
+    
+    { "intent": "AMAZON.StopIntent" },
+    { "intent": "AMAZON.CancelIntent" }
   ]
 }
