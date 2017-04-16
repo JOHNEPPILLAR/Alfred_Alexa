@@ -43,3 +43,35 @@ WillItSnowIntent will it snow today in {location}
 WillItSnowIntent will it snow in {location}
 WillItSnowIntent is it going to snow today in {location}
 WillItSnowIntent is it going to snow in {location}
+
+WeatherForcastTodayIntent what is the weather going to be today
+WeatherForcastTodayIntent what is the weather going to be
+WeatherForcastTodayIntent what is the weather today
+WeatherForcastTodayIntent what is the weather
+WeatherForcastTodayIntent what is the weather going to be today for {location}
+WeatherForcastTodayIntent what is the weather today for {location}
+WeatherForcastTodayIntent what is the weather for {location}
+WeatherForcastTodayIntent what is the weather in {location}
+WeatherForcastTodayIntent what's the weather going to be today
+WeatherForcastTodayIntent what's the weather going to be
+WeatherForcastTodayIntent what's the weather today
+WeatherForcastTodayIntent what's the weather
+WeatherForcastTodayIntent what's the weather going to be today for {location}
+WeatherForcastTodayIntent what's the weather today for {location}
+WeatherForcastTodayIntent what's the weather for {location}
+WeatherForcastTodayIntent what's the weather in {location}
+
+WeatherForcastTomorrowIntent what is the weather going to be tomorrow
+WeatherForcastTomorrowIntent what is the weather tomorrow
+WeatherForcastTomorrowIntent what is the weather going to be tomorrow for {location}
+WeatherForcastTomorrowIntent what is the weather tomorrow for {location}
+WeatherForcastTomorrowIntent what is the weather in {location} tomorrow
+WeatherForcastTomorrowIntent what's the weather tomorrow
+WeatherForcastTomorrowIntent what's the weather tomorrow for {location}
+WeatherForcastTomorrowIntent what's the weather for {location}
+WeatherForcastTomorrowIntent what's the weather in {location} tomorrow
+
+
+
+
+

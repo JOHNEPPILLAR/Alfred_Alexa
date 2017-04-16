@@ -65,6 +65,9 @@ var handlers = {
     'LaunchRequest': function() {
         this.emit('HelloIntent');
     },
+    'Unhandled': function() {
+        this.emit(':ask', 'to do. unhandeled Message', 'to do. unhandeled Message');
+    },
     'HelloIntent': function() {
         var url          = alfred_BaseURL + '?' + api_app_key,
             intent_obj   = this,
@@ -240,19 +243,19 @@ var handlers = {
     },
 
     // Travel api mappings - TODO
-    'TravelIntent': function (){
+    'TravelIntent': function(){
         var intent_obj = this;
             intent_obj.emit(':tell', 'To Do');
     },
 
     // TV api mappings - TODO
-    'TVIntent': function (){
+    'TVIntent': function(){
         var intent_obj = this;
             intent_obj.emit(':tell', 'To Do');
     },
 
     // Weather api mappings
-    'WillItSnowIntent': function (){
+    'WillItSnowIntent': function(){
         var itemSlot             = this.event.request.intent.slots.location,
             slotValue            = '',
             intent_obj           = this,
@@ -284,20 +287,82 @@ var handlers = {
         })
         .catch(function(err) {
             intent_obj.emit(':tell', errorMessage); // Send response back to alexa
-            console.log('time: ' + err);
+            console.log('WillItSnowIntent: ' + err);
+        });
+    },
+    'WeatherForcastTodayIntent': function(){
+        var itemSlot          = this.event.request.intent.slots.location,
+            slotValue         = '',
+            intent_obj        = this,
+            errorMessage      = 'There has been an error. I am unable to tell you the weather forcast.',
+            weatherMessage    = '',
+            weatherMessageEnd = '.';
+
+        if (itemSlot && itemSlot.value) {
+            slotValue = itemSlot.value.toLowerCase();
+            weatherMessageEnd = ' in ' + slotValue + '.';
+        };
+
+        var url = alfred_BaseURL + '/weather/today?location=' + slotValue + '&' + api_app_key;
+
+        requestAPIdata(url)
+        .then(function(apiObj) {
+            var apiData = apiObj.body.data;
+
+            if (apiObj.body.code == 'sucess'){                
+                weatherMessage = 'Currently it\'s ' + apiData.CurrentTemp.toFixed(0) + ' degrees with ' + apiData.Summary + weatherMessageEnd;
+                intent_obj.emit(':tell', processResponseText(weatherMessage)); // Send response back to alexa
+            }else{
+                intent_obj.emit(':tell', errorMessage); // Send response back to alexa
+            };
+        })
+        .catch(function(err) {
+            intent_obj.emit(':tell', errorMessage); // Send response back to alexa
+            console.log('WeatherForcastTodayIntent: ' + err);
+        });
+    },
+    'WeatherForcastTomorrowIntent': function(){
+        var itemSlot          = this.event.request.intent.slots.location,
+            slotValue         = '',
+            intent_obj        = this,
+            errorMessage      = 'There has been an error. I am unable to tell you the weather forcast.',
+            weatherMessage    = '',
+            weatherMessageEnd = '.';
+
+        if (itemSlot && itemSlot.value) {
+            slotValue = itemSlot.value.toLowerCase();
+            weatherMessageEnd = ' in ' + slotValue + '.';
+        };
+
+        var url = alfred_BaseURL + '/weather/tomorrow?location=' + slotValue + '&' + api_app_key;
+
+        requestAPIdata(url)
+        .then(function(apiObj) {
+            var apiData = apiObj.body.data,
+                speech  = new Speech();  
+
+            if (apiObj.body.code == 'sucess'){                
+                speech.say('Tomorrow morning will be ' + apiData.tomorrow_morning.Summary + ' with a high of ' + apiData.tomorrow_morning.MaxTemp.toFixed(0) + ' and a low of ' + apiData.tomorrow_morning.MinTemp.toFixed(0));
+                speech.pause('500ms');
+                speech.say('Tomorrow afternoon will be ' + apiData.tomorrow_evening.Summary + ' and an average of ' + apiData.tomorrow_evening.Temp.toFixed(0) + ' degrees' + weatherMessageEnd);
+                weatherMessage = speech.ssml(true);
+                intent_obj.emit(':tell', weatherMessage); // Send response back to alexa
+            }else{
+                intent_obj.emit(':tell', errorMessage); // Send response back to alexa
+            };
+        })
+        .catch(function(err) {
+            intent_obj.emit(':tell', errorMessage); // Send response back to alexa
+            console.log('WeatherForcastTomorrowIntent: ' + err);
         });
     },
 
 
 
-
-    'AMAZON.CancelIntent': function () {
+    'AMAZON.CancelIntent': function() {
         this.emit(':tell', "Cancelled, goodBye.");
     },
-    'AMAZON.StopIntent': function () {
+    'AMAZON.StopIntent': function() {
         this.emit(':tell', "Stopped, goodbye.");
-    },
-      'Unhandled': function () {
-        this.emit(':ask', 'to do. unhandeled Message', 'to do. unhandeled Message');
     }
 };

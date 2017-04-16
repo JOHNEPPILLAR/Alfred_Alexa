@@ -13,8 +13,8 @@
     { "intent": "TVIntent" },
 
     { "intent": "WillItSnowIntent", "slots": [{"name" : "location", "type": "AMAZON.GB_CITY"}] },
-    { "intent": "WeatherTodayIntent" },
-    { "intent": "WeatherTomorrowIntent" },
+    { "intent": "WeatherForcastTodayIntent", "slots": [{"name" : "location", "type": "AMAZON.GB_CITY"}] },
+    { "intent": "WeatherForcastTomorrowIntent", "slots": [{"name" : "location", "type": "AMAZON.GB_CITY"}] },
     
     { "intent": "AMAZON.StopIntent" },
     { "intent": "AMAZON.CancelIntent" }
