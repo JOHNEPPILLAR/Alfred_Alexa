@@ -32,8 +32,11 @@ function requestAPIdata (apiURL, userAgent) {
 // Process the returning text 
 function processResponseText(OutputText) {
     if (OutputText!== null) {
-        var speechObj =OutputText.match(/[^\.!\?]+[\.!\?]+/g),
+        var speechObj = OutputText.match(/[^\.!\?]+[\.!\?]+/g),
             speech = new Speech();  
+
+        // TODO fix ' with \' but only if it needs to be as some text already has the escape char
+
         speechObj.forEach(function(value) { // Construct ssml response
             speech.say(value);
             speech.pause('500ms');
@@ -63,15 +66,21 @@ var handlers = {
         this.emit('HelloIntent');
     },
     'HelloIntent': function() {
-        var url = alfred_BaseURL + '?' + api_app_key,
-            intent_obj = this;
+        var url          = alfred_BaseURL + '?' + api_app_key,
+            intent_obj   = this,
+            errorMessage = 'There has been an error. I am unable to say hello.';
+
         requestAPIdata(url)
         .then(function(apiObj) {
-            var apiData = apiObj.body; // Get the hello data
-            intent_obj.emit(':tell', processResponseText(apiData.data)); // Send response back to alexa
+            var apiData = apiObj.body.data;
+            if (apiObj.body.code == 'sucess') {
+                intent_obj.emit(':tell', processResponseText(apiData)); // Send response back to alexa
+            } else {
+                intent_obj.emit(':tell', errorMessage); // Send response back to alexa
+            };
         })
         .catch(function(err) {
-            intent_obj.emit(':tell', 'There was an error with the hello request.'); // Send response back to alexa
+            intent_obj.emit(':tell', errorMessage); // Send response back to alexa
             console.log('hello: ' + err);
         });
     },
@@ -79,27 +88,39 @@ var handlers = {
         this.emit('AMAZON.HelpIntent');
     },
     'AMAZON.HelpIntent': function () {
-        var url = alfred_BaseURL + '/help?' + api_app_key,
-            intent_obj = this;
+        var url          = alfred_BaseURL + '/help?' + api_app_key,
+            intent_obj   = this,
+            errorMessage = 'There has been an error. I am unable to help you.';
+
         requestAPIdata(url)
         .then(function(apiObj) {
-            var apiData = apiObj.body; // Get the help data
-            intent_obj.emit(':tell', processResponseText(apiData.data)); // Send response back to alexa
+            var apiData = apiObj.body.data;
+            if (apiObj.body.code == 'sucess'){
+                intent_obj.emit(':tell', processResponseText(apiData)); // Send response back to alexa
+            } else {
+                intent_obj.emit(':tell', errorMessage); // Send response back to alexa
+            };
         })
         .catch(function(err) {
-            intent_obj.emit(':tell', 'There was an error with the help request.'); // Send response back to alexa
+            intent_obj.emit(':tell', errorMessage); // Send response back to alexa
             console.log('help: ' + err);
         });
     },
 
     // Joke api mappings
     'JokeIntent': function() {
-        var url = alfred_BaseURL + '/joke?' + api_app_key,
-            intent_obj = this;
+        var url          = alfred_BaseURL + '/joke?' + api_app_key,
+            intent_obj   = this,
+            errorMessage = 'There has been an error. I am unable to tell you a Joke.';
+
         requestAPIdata(url)
         .then(function(apiObj) {
-            var apiData = apiObj.body; // Get the joke data
-            intent_obj.emit(':tell', processResponseText(apiData.data)); // Send response back to alexa
+            var apiData = apiObj.body.data;
+            if (apiObj.body.code == 'sucess'){
+                intent_obj.emit(':tell', processResponseText(apiData)); // Send response back to alexa
+            } else {
+                intent_obj.emit(':tell', errorMessage); // Send response back to alexa
+            };
         })
         .catch(function(err) {
             intent_obj.emit(':tell', 'There was an error with the joke request.'); // Send response back to alexa
@@ -107,7 +128,7 @@ var handlers = {
         });
     },
 
-    // Light api mappings
+    // Light api mappings - TODO
     'LightsIntent': function() {
         var intent_obj = this;
             intent_obj.emit(':tell', 'To Do');
@@ -115,9 +136,10 @@ var handlers = {
 
     // News api mappings
     'NewsIntent': function() {
-        var itemSlot      = this.event.request.intent.slots.newstype,
-            slotValue     = 'news',
-            newsErrorText = 'There was an error getting the news.';
+        var itemSlot     = this.event.request.intent.slots.newstype,
+            slotValue    = 'news',
+            intent_obj   = this,
+            errorMessage = 'There has been an error. I am unable to tell you the news.';
  
         if (itemSlot && itemSlot.value) {
             slotValue = itemSlot.value.toLowerCase();
@@ -139,17 +161,14 @@ var handlers = {
             break;
         };
 
-        var url = alfred_BaseURL + '/news?news_type=' + slotValue + '&' + api_app_key,
-            intent_obj = this;
+        var url = alfred_BaseURL + '/news?news_type=' + slotValue + '&' + api_app_key;
 
         requestAPIdata(url)
         .then(function(apiObj) {
             var apiData         = apiObj.body, // Get the news data
                 outputHeadlines = 'Here are the headlines: ';
 
-            if (apiData.code == 'error') {
-                outputHeadlines = newsErrorText;
-            } else {
+            if (apiObj.body.code == 'sucess') {
                 switch (slotValue) {
                 case 'news':
                     apiData.data.forEach(function(value) {
@@ -182,16 +201,18 @@ var handlers = {
                     outputHeadlines = processResponseText(outputHeadlines);
                     break;
                 };
+                intent_obj.emit(':tell', outputHeadlines); // Send response back to alexa
+            } else {
+                intent_obj.emit(':tell', errorMessage); // Send response back to alexa
             };
-            intent_obj.emit(':tell', outputHeadlines); // Send response back to alexa
         })
         .catch(function(err){
-            intent_obj.emit(':tell', newsErrorText); // Send response back to alexa
+            intent_obj.emit(':tell', errorMessage); // Send response back to alexa
             console.log('news: ' + err);
         });
     },
 
-    // Search api mappings
+    // Search api mappings - TODO
     'SearchIntent': function() {
         var intent_obj = this;
             intent_obj.emit(':tell', 'To Do');
@@ -199,32 +220,72 @@ var handlers = {
 
     // Time api mappings
     'TimeIntent': function() {
-        var url = alfred_BaseURL + '/whatisthetime?' + api_app_key,
-            intent_obj = this;
+        var url          = alfred_BaseURL + '/whatisthetime?' + api_app_key,
+            intent_obj   = this,
+            errorMessage = 'There has been an error. I am unable to tell you the time.';
+
         requestAPIdata(url)
         .then(function(apiObj) {
-            var apiData = apiObj.body; // Get the time data
-            intent_obj.emit(':tell', processResponseText(apiData.data)); // Send response back to alexa
+            var apiData = apiObj.body.data;
+            if (apiObj.body.code == 'sucess') {
+                intent_obj.emit(':tell', processResponseText(apiData)); // Send response back to alexa
+            } else {
+                intent_obj.emit(':tell', errorMessage); // Send response back to alexa
+            };
         })
         .catch(function(err) {
-            intent_obj.emit(':tell', 'There was an error with the time request.'); // Send response back to alexa
+            intent_obj.emit(':tell', errorMessage); // Send response back to alexa
             console.log('time: ' + err);
         });
     },
 
-    // Travel api mappings
+    // Travel api mappings - TODO
     'TravelIntent': function (){
         var intent_obj = this;
             intent_obj.emit(':tell', 'To Do');
     },
 
+    // TV api mappings - TODO
     'TVIntent': function (){
         var intent_obj = this;
             intent_obj.emit(':tell', 'To Do');
     },
-    'WeatherIntent': function (){
-        var intent_obj = this;
-            intent_obj.emit(':tell', 'To Do');
+
+    // Weather api mappings
+    'WillItSnowIntent': function (){
+        var itemSlot             = this.event.request.intent.slots.location,
+            slotValue            = '',
+            intent_obj           = this,
+            errorMessage         = 'There has been an error. I am unable to tell you if it will snow.',
+            willItSnowMessage    = '',
+            willItSnowMessageEnd = '.';
+
+        if (itemSlot && itemSlot.value) {
+            slotValue = itemSlot.value.toLowerCase();
+            willItSnowMessageEnd = ' in ' + slotValue + '.';
+        };
+
+        var url = alfred_BaseURL + '/weather/willitsnow?location=' + slotValue + '&' + api_app_key;
+
+        requestAPIdata(url)
+        .then(function(apiObj) {
+            var apiData = apiObj.body.data;
+            if (apiObj.body.code == 'sucess'){
+                if (apiObj.body.data.going_to_snow){
+                    willItSnowMessage = 'It\'s going to Snow';
+                } else {
+                    willItSnowMessage = 'It\'s not going to snow in the new few days';
+                };
+                willItSnowMessage = willItSnowMessage + willItSnowMessageEnd;
+                intent_obj.emit(':tell', willItSnowMessage); // Send response back to alexa
+            }else{
+                intent_obj.emit(':tell', errorMessage); // Send response back to alexa
+            };
+        })
+        .catch(function(err) {
+            intent_obj.emit(':tell', errorMessage); // Send response back to alexa
+            console.log('time: ' + err);
+        });
     },
 
 

@@ -11,7 +11,10 @@
     { "intent": "TimeIntent" },
     { "intent": "TravelIntent" },
     { "intent": "TVIntent" },
-    { "intent": "WeatherIntent" },
+
+    { "intent": "WillItSnowIntent", "slots": [{"name" : "location", "type": "AMAZON.GB_CITY"}] },
+    { "intent": "WeatherTodayIntent" },
+    { "intent": "WeatherTomorrowIntent" },
     
     { "intent": "AMAZON.StopIntent" },
     { "intent": "AMAZON.CancelIntent" }

@@ -35,4 +35,11 @@ TimeIntent what's the time
 TimeIntent check the time
 TimeIntent tell me the time
 
-
+WillItSnowIntent will it snow today
+WillItSnowIntent will it snow
+WillItSnowIntent is it going to snow today
+WillItSnowIntent is it going to snow
+WillItSnowIntent will it snow today in {location}
+WillItSnowIntent will it snow in {location}
+WillItSnowIntent is it going to snow today in {location}
+WillItSnowIntent is it going to snow in {location}
