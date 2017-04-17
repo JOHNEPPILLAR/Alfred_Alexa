@@ -1,15 +1,5 @@
 'use strict';
 
-//=========================================================
-// TODO 
-/*
-
-Finish off launch request
-Get custom slot catchall working
-
-*/
-//=========================================================
-
 const Alexa  = require('alexa-sdk'),
       rp     = require('request-promise'),
       dotenv = require('dotenv');
@@ -18,7 +8,7 @@ dotenv.load() // Load env vars
 
 var APP_ID      = process.env.appid,
     api_app_key = process.env.app_key,
-    url         = 'http://' + process.env.Alfred_DI_IP + ':' + process.env.Alfred_DI_Port + '/?app_key=' + api_app_key + '&user_request=';
+    baseUrl     = 'http://' + process.env.Alfred_DI_IP + ':' + process.env.Alfred_DI_Port + '/?app_key=' + api_app_key + '&user_request=';
 
 //=========================================================
 // Helper functions
@@ -52,19 +42,35 @@ exports.handler = function(event, context, callback) {
 //=========================================================
 var handlers = {
     'LaunchRequest': function() { // Say hello
-        // TO DO
-        this.emit(':ask', 'call to alfred api for hello', 'call to alfred with help');
+        var promises     = [],
+            intent_obj   = this,
+            errorMessage = 'Sorry, there has been an error. <break time=\'500ms\'/> I am unable to process any requests at the moment.';
+        
+        promises.push(requestAPIdata(baseUrl + 'hello')); // push the hello request to the Promises array
+        promises.push(requestAPIdata(baseUrl + 'help')); // push the help request to the Promises array
+        
+        Promise.all(promises)
+        .then(function(resolved){
+            if (resolved[0].body.code == 'sucess' && resolved[1].body.code == 'sucess') {
+                intent_obj.emit(':ask', resolved[0].body.data, resolved[1].body.data);
+            } else {
+                intent_obj.emit(':tell', errorMessage); // Send response back to alexa
+                console.log('Alfred launch: Error getting data from alfred NLP api.');
+            };
+        })
+        .catch(function(err) {
+            intent_obj.emit(':tell', errorMessage); // Send response back to alexa
+            console.log('Alfred launch: ' + err);
+        });
     },
     'MainIntent': function() { // Pass all requests on the Alfred_NLP api
         var intent_obj   = this,
             errorMessage = 'Sorry, there has been an error. <break time=\'500ms\'/> I am unable to process any requests at the moment.',
             userRequest  = this.event.request.intent.slots.CatchAll.value;
 
-console.log(this.event.request.intent.slots.CatchAll.value)
-
         if (typeof userRequest !== 'undefined' && userRequest !== null) { // Make sure param is not empty
 
-            url = url + userRequest; // Append the request to the url
+            var url = baseUrl + userRequest; // Append the request to the url
 
             requestAPIdata(url) // Go get the data from Alfred
             .then(function(apiObj) {
