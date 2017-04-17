@@ -13,4 +13,4 @@ nvm use 6.10.0
 
 echo "Now run the alexa skill local test server"
 nodemon ./localTestServer/server.js
-#node server.js
+#node ./localTestServer/server.js

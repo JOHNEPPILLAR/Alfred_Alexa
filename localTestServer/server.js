@@ -35,6 +35,7 @@ function processRequest(req, res, next) {
 // Setup lambda skill server
 server = new bst.LambdaServer('./src/index.js', 10000, false),
 alexa  = new bst.BSTAlexa('http://localhost:10000?disableSignatureCheck=true', './speechAssets/IntentSchema.json','./speechAssets/SampleUtterances.txt','JP');
+
 // Start the Alexa skill under the lambda server
 server.start(function () {
     console.log ('Lambda server started');
@@ -48,15 +49,17 @@ const APIserver = restify.createServer({
     name    : process.env.APINAME,
     version : process.env.VERSION,
 });
+
 // Middleware
 APIserver.use(restify.jsonBodyParser({ mapParams: true }));
 APIserver.use(restify.acceptParser(APIserver.acceptable));
 APIserver.use(restify.queryParser({ mapParams: true }));
 APIserver.use(restify.fullResponse());
+
 // Map the root to processReauest function for processing
 APIserver.get('/', processRequest);
+
 // Start server and listen to messqges
-//APIserver.listen(process.env.PORT, function() {
-APIserver.listen(3976, function() {
+APIserver.listen(process.env.PORT, function() {
    console.log('Alexa local skill test server listening to %s', APIserver.name, APIserver.url);
 });
