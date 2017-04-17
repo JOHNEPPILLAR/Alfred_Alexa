@@ -1,11 +1,20 @@
 'use strict';
+
+//=========================================================
+// TODO 
+/*
+
+Finish off launch request
+Get custom slot catchall working
+
+*/
+//=========================================================
+
 const Alexa  = require('alexa-sdk'),
       rp     = require('request-promise'),
       dotenv = require('dotenv');
 
-// Load env vars
-dotenv.load()
-// TODO - fix as env does not work when using nodenmon from root!
+dotenv.load() // Load env vars
 
 var APP_ID      = process.env.appid,
     api_app_key = process.env.app_key,
@@ -42,11 +51,11 @@ exports.handler = function(event, context, callback) {
 // Intents
 //=========================================================
 var handlers = {
-    // Generic api mappings
-    'LaunchRequest': function() {
+    'LaunchRequest': function() { // Say hello
+        // TO DO
         this.emit(':ask', 'call to alfred api for hello', 'call to alfred with help');
     },
-    'MainIntent': function() {
+    'MainIntent': function() { // Pass all requests on the Alfred_NLP api
         var intent_obj   = this,
             errorMessage = 'Sorry, there has been an error. <break time=\'500ms\'/> I am unable to process any requests at the moment.',
             userRequest  = this.event.request.intent.slots.CatchAll.value;
