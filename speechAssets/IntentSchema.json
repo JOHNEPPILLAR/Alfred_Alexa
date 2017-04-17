@@ -1,22 +1,6 @@
 {
   "intents": [
-    { "intent": "HelloIntent" },
-    { "intent": "HelpIntent" },
-    { "intent": "AMAZON.HelpIntent" },
-
-    { "intent": "JokeIntent" },
-    { "intent": "LightsIntent" },
-    { "intent": "NewsIntent", "slots": [{"name" : "newstype", "type": "newstypes"}] },
-    { "intent": "SearchIntent" },
-    { "intent": "TimeIntent" },
-    { "intent": "TravelIntent" },
-    { "intent": "TVIntent" },
-
-    { "intent": "WillItSnowIntent", "slots": [{"name" : "location", "type": "AMAZON.GB_CITY"}] },
-    { "intent": "WeatherForcastTodayIntent", "slots": [{"name" : "location", "type": "AMAZON.GB_CITY"}] },
-    { "intent": "WeatherForcastTomorrowIntent", "slots": [{"name" : "location", "type": "AMAZON.GB_CITY"}] },
-    
-    { "intent": "AMAZON.StopIntent" },
-    { "intent": "AMAZON.CancelIntent" }
+    { "intent": "MainIntent", "slots": [{"name": "CatchAll", "type": "CATCH_ALL"}] },
+    { "intent": "AMAZON.StopIntent" }
   ]
 }

@@ -33,7 +33,7 @@ function processRequest(req, res, next) {
 };
 
 // Setup lambda skill server
-server = new bst.LambdaServer('./src/index.js', 10000, true),
+server = new bst.LambdaServer('./src/index.js', 10000, false),
 alexa  = new bst.BSTAlexa('http://localhost:10000?disableSignatureCheck=true', './speechAssets/IntentSchema.json','./speechAssets/SampleUtterances.txt','JP');
 // Start the Alexa skill under the lambda server
 server.start(function () {
@@ -57,6 +57,6 @@ APIserver.use(restify.fullResponse());
 APIserver.get('/', processRequest);
 // Start server and listen to messqges
 //APIserver.listen(process.env.PORT, function() {
-APIserver.listen(3977, function() {
+APIserver.listen(3976, function() {
    console.log('Alexa local skill test server listening to %s', APIserver.name, APIserver.url);
 });

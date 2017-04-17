@@ -1,5 +1,0 @@
-news
-sports
-science
-tech
-business
