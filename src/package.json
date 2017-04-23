@@ -21,6 +21,9 @@
     "alexa-sdk": "*",
     "dotenv": "*",
     "request": "*",
-    "request-promise": "*"
+    "request-promise": "*",
+    "winston": "*",
+    "ssml-builder": "*",
+    "dateformat": "*"
   }
 }
