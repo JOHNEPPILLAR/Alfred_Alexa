@@ -85,6 +85,18 @@ var handlers = {
         logger.info ('Calling the Next Bus intent.');
         nextBusIntent(this); // Process the intent
     },
+    'NextTrain': function() {
+        logger.info ('Calling the Next Train intent.');
+        nextTrainIntent(this); // Process the intent
+    },
+    'BusStatus': function() {
+        logger.info ('Calling the Bus Status intent.');
+        busStatusIntent(this); // Process the intent
+    },
+    'TubeStatus': function() {
+        logger.info ('Calling the Tube Status intent.');
+        tubeStatusIntent(this); // Process the intent
+    },
 
 
 
@@ -452,7 +464,7 @@ function weatherIntent (intentObj) {
 
 // Next bus
 function nextBusIntent (intentObj) {
-    var errorMessage = 'I seem to have an internal error. I am unable to tell you when the next bus is.',
+    var errorMessage = 'I seem to have an internal error. I am unable to tell you when the next bus will be.',
         busRoute = '&bus_route=380';
 
     // Construct url
@@ -474,4 +486,107 @@ function nextBusIntent (intentObj) {
     });
 };
 
+// Next Train
+function nextTrainIntent (intentObj) {
+    var errorMessage = 'I seem to have an internal error. I am unable to tell you when the next train will be.',
+        route        = intentObj.event.request.intent.slots.TrainDestination.value;
+logger.info(route)
+    if (typeof route !== 'undefined' && route !== null) {
+        switch (route.toLowerCase()) {
+            case 'london bridge':
+                route = '&train_destination=CHX';
+                break;
+            case 'charing cross':
+                route = '&train_destination=CHX';
+                break;
+            case 'cannon street':
+                route = '&train_destination=CST';
+                break;
+            default:
+                route = '&train_destination=CHX';
+            break;
+        };
+    } else {
+        route = '&train_destination=CHX';
+    };
+
+    // Construct url
+    var url = baseUrl + '/travel/nexttrain?app_key=' + process.env.app_key + route;
+logger.info (url)
+
+    // Call the url and process data
+    requestAPIdata(url) // Call the api
+    .then(function(apiObj) {
+        var apiData = apiObj.body.data;
+        if (apiObj.body.code == 'sucess') { // if sucess process the data
+            intentObj.emit(':tell', processResponseText(apiData)); 
+        } else { // if error return a nice message
+            intentObj.emit(':tell', processResponseText(errorMessage)); 
+        };
+    })
+    .catch(function(err) { // if error return a nice message
+        intentObj.emit(':tell', processResponseText(errorMessage)); 
+        logger.error('Next Train: ' + err);
+    });
+};
+
+// Bus status
+function busStatusIntent (intentObj) {
+    var errorMessage = 'I seem to have an internal error. I am unable to tell you the bus status.',
+        route        = intentObj.event.request.intent.slots.BusNumber.value;
+
+    if (typeof route !== 'undefined' && route !== null) {
+        route = '&route=' + route;
+    } else {
+        route = '&route=';
+    };
+
+    // Construct url
+    var url = baseUrl + '/travel/bustubestatus?app_key=' + process.env.app_key + route;
+
+    // Call the url and process data
+    requestAPIdata(url) // Call the api
+    .then(function(apiObj) {
+        var apiData = apiObj.body.data;
+        if (apiObj.body.code == 'sucess') { // if sucess process the data
+            intentObj.emit(':tell', processResponseText(apiData)); 
+        } else { // if error return a nice message
+            intentObj.emit(':tell', processResponseText(errorMessage)); 
+        };
+    })
+    .catch(function(err) { // if error return a nice message
+        intentObj.emit(':tell', processResponseText(errorMessage)); 
+        logger.error('Bus Status: ' + err);
+    });
+};
+
+// Tube status
+function tubeStatusIntent (intentObj) {
+    var errorMessage = 'I seem to have an internal error. I am unable to tell you the tube line status.',
+        route        = intentObj.event.request.intent.slots.TubeLine.value;
+
+    if (typeof route !== 'undefined' && route !== null) {
+        route = '&route=' + route;
+    } else {
+        route = '&route=';
+    };
+
+    // Construct url
+    var url = baseUrl + '/travel/bustubestatus?app_key=' + process.env.app_key + route;
+
+    // Call the url and process data
+    requestAPIdata(url) // Call the api
+    .then(function(apiObj) {
+        var apiData = apiObj.body.data;
+        if (apiObj.body.code == 'sucess') { // if sucess process the data
+            intentObj.emit(':tell', processResponseText(apiData)); 
+        } else { // if error return a nice message
+            intentObj.emit(':tell', processResponseText(errorMessage)); 
+        };
+    })
+    .catch(function(err) { // if error return a nice message
+        intentObj.emit(':tell', processResponseText(errorMessage)); 
+        logger.error('Tube Status: ' + err);
+    });
+};
 
