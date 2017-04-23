@@ -81,6 +81,10 @@ var handlers = {
         logger.info ('Calling the Weather intent.');
         weatherIntent(this); // Process the intent
     },
+    'NextBus': function() {
+        logger.info ('Calling the Next Bus intent.');
+        nextBusIntent(this); // Process the intent
+    },
 
 
 
@@ -128,6 +132,24 @@ function processResponseText (OutputText) {
     } else {
         return 'There was an error processing the response text.';
     };
+};
+
+function addDays (date, amount) {
+    var tzOff = date.getTimezoneOffset() * 60 * 1000,
+        t = date.getTime(),
+        d = new Date(),
+        tzOff2;
+
+    t += (1000 * 60 * 60 * 24) * amount;
+    d.setTime(t);
+
+    tzOff2 = d.getTimezoneOffset() * 60 * 1000;
+    if (tzOff != tzOff2) {
+        var diff = tzOff2 - tzOff;
+        t += diff;
+        d.setTime(t);
+    };
+    return d;
 };
 
 //=========================================================
@@ -288,6 +310,8 @@ function snowIntent (intentObj) {
     var errorMessage      = 'I seem to have an internal error. I am unable to tell you if it will snow.',
         location          = intentObj.event.request.intent.slots.Location.value,
         when              = intentObj.event.request.intent.slots.When.value,
+        dateTomorrow      = dateFormat(addDays(new Date(), 1), "yyyy-mm-dd"),
+        dateToday         = dateFormat(Date.now(), "yyyy-mm-dd"),
         willItSnowMessage = '',
         locationMsg       = '.';
 
@@ -302,10 +326,12 @@ function snowIntent (intentObj) {
     var url = baseUrl + '/weather/willitsnow?app_key=' + process.env.app_key + location;
 
     if (typeof when !== 'undefined' && when !== null) {
-        switch (when.toLowerCase()) {
-            case 'today':
+        switch (when) {
+            case dateToday:
+                when = 'today';
                 break;
-            case 'tomorrow':
+            case dateTomorrow:
+                when = 'tomorrow';
                 break;
             default:
                 when = 'today';
@@ -359,6 +385,8 @@ function weatherIntent (intentObj) {
     var errorMessage   = 'I seem to have an internal error. I am unable to tell you the weather.',
         location       = intentObj.event.request.intent.slots.Location.value,
         when           = intentObj.event.request.intent.slots.When.value,
+        dateTomorrow   = dateFormat(addDays(new Date(), 1), "yyyy-mm-dd"),
+        dateToday      = dateFormat(Date.now(), "yyyy-mm-dd"),
         locationMsg    = '',
         weatherMessage = '';
 
@@ -371,13 +399,15 @@ function weatherIntent (intentObj) {
 
     if (typeof when !== 'undefined' && when !== null) {
         switch (when.toLowerCase()) {
-            case 'today':
+            case dateToday:
+                when = 'today';
                 break;
-            case 'tomorrow':
+            case dateTomorrow:
+                when = 'tomorrow';
                 break;
             default:
-                when = 'today';
-            break;
+                when = 'tomorrow';
+                break;
         };
     } else {
         when = 'today';
@@ -402,9 +432,11 @@ function weatherIntent (intentObj) {
                                         ' with a high of ' + apiData.tomorrow_morning.MaxTemp.toFixed(0) +
                                         ' and a low of ' + apiData.tomorrow_morning.MinTemp.toFixed(0) + '.' + 
                                         ' Tomorrow afternoon will be ' + apiData.tomorrow_evening.Summary +
-                                        ' and an average of ' + apiData.tomorrow_evening.Temp.toFixed(0) + ' degrees';
+                                        ' and an average of ' + apiData.tomorrow_evening.Temp.toFixed(0) + ' degrees.';
                     break;
                 default:
+                    // TO DO
+                    weatherMessage = 'To do.';
                     break;
             };
             intentObj.emit(':tell', processResponseText(weatherMessage)); 
@@ -417,3 +449,29 @@ function weatherIntent (intentObj) {
         logger.error('weather: ' + err);
     });
 };
+
+// Next bus
+function nextBusIntent (intentObj) {
+    var errorMessage = 'I seem to have an internal error. I am unable to tell you when the next bus is.',
+        busRoute = '&bus_route=380';
+
+    // Construct url
+    var url = baseUrl + '/travel/nextbus?app_key=' + process.env.app_key + busRoute;
+
+    // Call the url and process data
+    requestAPIdata(url) // Call the api
+    .then(function(apiObj) {
+        var apiData = apiObj.body.data;
+        if (apiObj.body.code == 'sucess') { // if sucess process the data
+            intentObj.emit(':tell', processResponseText(apiData)); 
+        } else { // if error return a nice message
+            intentObj.emit(':tell', processResponseText(errorMessage)); 
+        };
+    })
+    .catch(function(err) { // if error return a nice message
+        intentObj.emit(':tell', processResponseText(errorMessage)); 
+        logger.error('nextBus: ' + err);
+    });
+};
+
+
