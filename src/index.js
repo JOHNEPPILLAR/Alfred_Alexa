@@ -77,6 +77,10 @@ var handlers = {
         logger.info ('Calling the Snow intent.');
         snowIntent(this); // Process the intent
     },
+    'Weather': function() {
+        logger.info ('Calling the Weather intent.');
+        weatherIntent(this); // Process the intent
+    },
 
 
 
@@ -297,9 +301,17 @@ function snowIntent (intentObj) {
     // Construct url
     var url = baseUrl + '/weather/willitsnow?app_key=' + process.env.app_key + location;
 
-logger.info ('when: '+when)
-
-    if (typeof when == 'undefined' || when == null || when == '') {
+    if (typeof when !== 'undefined' && when !== null) {
+        switch (when.toLowerCase()) {
+            case 'today':
+                break;
+            case 'tomorrow':
+                break;
+            default:
+                when = 'today';
+            break;
+        };
+    } else {
         when = 'today';
     };
 
@@ -339,5 +351,69 @@ logger.info ('when: '+when)
     .catch(function(err) { // if error return a nice message
         intentObj.emit(':tell', processResponseText(errorMessage)); 
         logger.error('snow: ' + err);
+    });
+};
+
+// Weather
+function weatherIntent (intentObj) {
+    var errorMessage   = 'I seem to have an internal error. I am unable to tell you the weather.',
+        location       = intentObj.event.request.intent.slots.Location.value,
+        when           = intentObj.event.request.intent.slots.When.value,
+        locationMsg    = '',
+        weatherMessage = '';
+
+    if (typeof location !== 'undefined' && location !== null) {
+        locationMsg = ' in ' + location; 
+        location    = '&location=' + location;
+    } else {
+        location = '';
+    };
+
+    if (typeof when !== 'undefined' && when !== null) {
+        switch (when.toLowerCase()) {
+            case 'today':
+                break;
+            case 'tomorrow':
+                break;
+            default:
+                when = 'today';
+            break;
+        };
+    } else {
+        when = 'today';
+    };
+
+    // Construct url
+    var url = baseUrl + '/weather/' + when + '?app_key=' + process.env.app_key + location;
+
+    // Call the url and process data
+    requestAPIdata(url) // Call the api
+    .then(function(apiObj) {
+        var apiData = apiObj.body.data;
+        if (apiObj.body.code == 'sucess') { // if sucess process the data
+            switch (when) {
+                case 'today':
+                    weatherMessage = 'Currently' + locationMsg +
+                                        ' it\'s ' + apiData.CurrentTemp.toFixed(0) + ' degrees with ' + 
+                                        apiData.Summary + '.';
+                    break;
+                case 'tomorrow':
+                    weatherMessage = 'Tomorrow morning' + locationMsg + ' will be ' + apiData.tomorrow_morning.Summary +
+                                        ' with a high of ' + apiData.tomorrow_morning.MaxTemp.toFixed(0) +
+                                        ' and a low of ' + apiData.tomorrow_morning.MinTemp.toFixed(0) + '.' + 
+                                        ' Tomorrow afternoon will be ' + apiData.tomorrow_evening.Summary +
+                                        ' and an average of ' + apiData.tomorrow_evening.Temp.toFixed(0) + ' degrees';
+                    break;
+                default:
+                    break;
+            };
+            intentObj.emit(':tell', processResponseText(weatherMessage)); 
+        } else { // if error return a nice message
+            intentObj.emit(':tell', processResponseText(errorMessage)); 
+        };
+    })
+    .catch(function(err) { // if error return a nice message
+        intentObj.emit(':tell', processResponseText(errorMessage)); 
+        logger.error('weather: ' + err);
     });
 };
