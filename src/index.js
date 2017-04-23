@@ -97,9 +97,10 @@ var handlers = {
         logger.info ('Calling the Tube Status intent.');
         tubeStatusIntent(this); // Process the intent
     },
-
-
-
+    'Commute': function() {
+        logger.info ('Calling the Commute intent.');
+        commuteIntent(this); // Process the intent
+    }
 };
 
 //=========================================================
@@ -130,19 +131,19 @@ function requestAPIdata (apiURL, userAgent) {
 };
 
 function processResponseText (OutputText) {
-    if (OutputText!== null) {
-        var speechObj = OutputText.match(/[^\.!\?]+[\.!\?]+/g),
-            speech = new Speech();  
+    if (OutputText!== null) {
+        var speechObj = OutputText.match(/[^\.!\?]+[\.!\?]+/g),
+            speech = new Speech();  
 
         // TODO fix ' with \' but only if it needs to be as some text already has the escape char
 
-        speechObj.forEach(function(value) { // Construct ssml response
-            speech.say(value);
-            speech.pause('500ms');
-        });
-        return speech.ssml(true);
-    } else {
-        return 'There was an error processing the response text.';
+        speechObj.forEach(function(value) { // Construct ssml response
+            speech.say(value);
+            speech.pause('500ms');
+        });
+        return speech.ssml(true);
+    } else {
+        return 'There was an error processing the response text.';
     };
 };
 
@@ -490,7 +491,7 @@ function nextBusIntent (intentObj) {
 function nextTrainIntent (intentObj) {
     var errorMessage = 'I seem to have an internal error. I am unable to tell you when the next train will be.',
         route        = intentObj.event.request.intent.slots.TrainDestination.value;
-logger.info(route)
+
     if (typeof route !== 'undefined' && route !== null) {
         switch (route.toLowerCase()) {
             case 'london bridge':
@@ -512,7 +513,6 @@ logger.info(route)
 
     // Construct url
     var url = baseUrl + '/travel/nexttrain?app_key=' + process.env.app_key + route;
-logger.info (url)
 
     // Call the url and process data
     requestAPIdata(url) // Call the api
@@ -588,5 +588,73 @@ function tubeStatusIntent (intentObj) {
         intentObj.emit(':tell', processResponseText(errorMessage)); 
         logger.error('Tube Status: ' + err);
     });
+};
+
+// Tube status
+function commuteIntent (intentObj) {
+    var errorMessage    = 'I seem to have an internal error. I am unable to work out your commute.',
+        promises        = [],
+        tubeCentralUrl  = baseUrl + '/travel/bustubestatus?app_key=' + process.env.app_key + '&raw=true&route=central',
+        tubeBakerlooUrl = baseUrl + '/travel/bustubestatus?app_key=' + process.env.app_key + '&raw=true&route=bakerloo',
+        tubeCircleUrl   = baseUrl + '/travel/bustubestatus?app_key=' + process.env.app_key + '&raw=true&route=circle',
+        number9busUrl   = baseUrl + '/travel/bustubestatus?app_key=' + process.env.app_key + '&raw=true&route=9',
+        trainCHXUrl     = baseUrl + '/travel/nexttrain?app_key=' + process.env.app_key + '&train_destination=CHX',
+        trainCSTUrl     = baseUrl + '/travel/nexttrain?app_key=' + process.env.app_key + '&train_destination=CST',
+        outputText      = '',
+        distruptions    = false,
+        franCommute     = true;
+
+    if (!franCommute){ // JP's commute
+        promises.push(requestAPIdata(tubeCentralUrl));
+        promises.push(requestAPIdata(tubeCircleUrl));
+        promises.push(requestAPIdata(trainCSTUrl));
+
+        // TO DO
+        Promise.all(promises)
+        .then(function(resolved){
+            if (resolved[0].body.code == 'sucess' && 
+                resolved[1].body.code == 'sucess' &&
+                resolved[2].body.code == 'sucess') {
+                /*
+                if (resolved[0].body.data == 'false') {
+                    outputText = 'There are no disruptions on the number 9 bus.';
+                } else {
+                    outputText = 'There are resported disruptions on the number 9 bus.';
+                };
+                outputText = outputText + resolved[1].body.data;
+                */
+                intentObj.emit(':tell', processResponseText(outputText)); 
+            } else {
+                intentObj.emit(':tell', processResponseText(errorMessage)); 
+                logger.error('Commute: ' + err);
+            };
+        })
+        .catch(function(err) { // if error return a nice message
+            intentObj.emit(':tell', processResponseText(errorMessage)); 
+            logger.error('Commute: ' + err);
+        });
+    } else { // Fran's commute
+        promises.push(requestAPIdata(number9busUrl));
+        promises.push(requestAPIdata(trainCHXUrl));
+        Promise.all(promises)
+        .then(function(resolved){
+            if (resolved[0].body.code == 'sucess' && resolved[1].body.code == 'sucess') {
+                if (resolved[0].body.data == 'false') {
+                    outputText = 'There are no disruptions on the number 9 bus.';
+                } else {
+                    outputText = 'There are resported disruptions on the number 9 bus.';
+                };
+                outputText = outputText + resolved[1].body.data;
+                intentObj.emit(':tell', processResponseText(outputText)); 
+            } else {
+                intentObj.emit(':tell', processResponseText(errorMessage)); 
+                logger.error('Commute: ' + err);
+            };
+        })
+        .catch(function(err) { // if error return a nice message
+            intentObj.emit(':tell', processResponseText(errorMessage)); 
+            logger.error('Commute: ' + err);
+        });
+    };
 };
 
