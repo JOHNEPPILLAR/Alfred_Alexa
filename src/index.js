@@ -597,32 +597,50 @@ function commuteIntent (intentObj) {
         tubeCentralUrl  = baseUrl + '/travel/bustubestatus?app_key=' + process.env.app_key + '&raw=true&route=central',
         tubeBakerlooUrl = baseUrl + '/travel/bustubestatus?app_key=' + process.env.app_key + '&raw=true&route=bakerloo',
         tubeCircleUrl   = baseUrl + '/travel/bustubestatus?app_key=' + process.env.app_key + '&raw=true&route=circle',
+        tubeJubileeUrl   = baseUrl + '/travel/bustubestatus?app_key=' + process.env.app_key + '&raw=true&route=jubilee',
         number9busUrl   = baseUrl + '/travel/bustubestatus?app_key=' + process.env.app_key + '&raw=true&route=9',
-        trainCHXUrl     = baseUrl + '/travel/nexttrain?app_key=' + process.env.app_key + '&train_destination=CHX',
-        trainCSTUrl     = baseUrl + '/travel/nexttrain?app_key=' + process.env.app_key + '&train_destination=CST',
+        trainCHXUrl     = baseUrl + '/travel/nexttrain?app_key=' + process.env.app_key + '&raw=true&train_destination=CHX',
+        trainCSTUrl     = baseUrl + '/travel/nexttrain?app_key=' + process.env.app_key + '&raw=true&train_destination=CST',
         outputText      = '',
         distruptions    = false,
-        franCommute     = true;
+        franCommute     = false;
 
     if (!franCommute){ // JP's commute
-        promises.push(requestAPIdata(tubeCentralUrl));
-        promises.push(requestAPIdata(tubeCircleUrl));
         promises.push(requestAPIdata(trainCSTUrl));
+        promises.push(requestAPIdata(trainCHXUrl));
+        promises.push(requestAPIdata(tubeCentralUrl));
+        promises.push(requestAPIdata(tubeJubileeUrl));
 
         // TO DO
         Promise.all(promises)
         .then(function(resolved){
             if (resolved[0].body.code == 'sucess' && 
                 resolved[1].body.code == 'sucess' &&
-                resolved[2].body.code == 'sucess') {
-                /*
-                if (resolved[0].body.data == 'false') {
-                    outputText = 'There are no disruptions on the number 9 bus.';
-                } else {
-                    outputText = 'There are resported disruptions on the number 9 bus.';
+                resolved[2].body.code == 'sucess' &&
+                resolved[3].body.code == 'sucess') {
+
+                if (resolved[0].body.data.disruptions == null && resolved[2].body.data == 'false') { // CST Trains and Central line are ok
+                    outputText = resolved[0].body.data;
                 };
-                outputText = outputText + resolved[1].body.data;
-                */
+                if (resolved[0].body.data.disruptions == 'true' && // Problem on CST, CHX trains and Jubilee
+                    resolved[1].body.data.disruptions == 'true' &&
+                    resolved[3].body.data == 'true') { 
+                    outputText = 'There are disruptions reported on all trains and the Jubilee line. I would check Southeastern and city mapper for more information.';
+                };
+                if (resolved[0].body.data.disruptions == 'true' && // Problem on CST, CHX trains. Jubilee line ok
+                    resolved[1].body.data.disruptions == 'true' &&
+                    resolved[3].body.data == 'false') { 
+                    outputText = 'There are disruptions reported on all trains, so I sugest you get the tube as the Jubilee line look ok. I would check Southeastern and city mapper just in case though.';
+                };
+                if (resolved[0].body.data.disruptions == 'true' && // Problem on CST, CHX is ok
+                    resolved[1].body.data.disruptions == null) { 
+                    outputText = 'There are disruptions reported on trains to Cannon Street, so I suggest going to Charing Cross today. But I would check Southeastern just in case.';
+                };
+                if (resolved[0].body.data.disruptions == null && // Trains are ok but problem on Central line
+                    resolved[1].body.data.disruptions == null &&
+                    resolved[2].body.data == 'true') { 
+                    outputText = 'There are disruptions reported on the central line. I suggest you go to Charing Cross today. But I would check Southeastern just in case.';
+                };
                 intentObj.emit(':tell', processResponseText(outputText)); 
             } else {
                 intentObj.emit(':tell', processResponseText(errorMessage)); 
@@ -634,17 +652,30 @@ function commuteIntent (intentObj) {
             logger.error('Commute: ' + err);
         });
     } else { // Fran's commute
-        promises.push(requestAPIdata(number9busUrl));
         promises.push(requestAPIdata(trainCHXUrl));
+        promises.push(requestAPIdata(tubeJubileeUrl));
+        promises.push(requestAPIdata(number9busUrl));
+
         Promise.all(promises)
         .then(function(resolved){
-            if (resolved[0].body.code == 'sucess' && resolved[1].body.code == 'sucess') {
-                if (resolved[0].body.data == 'false') {
-                    outputText = 'There are no disruptions on the number 9 bus.';
-                } else {
-                    outputText = 'There are resported disruptions on the number 9 bus.';
+            if (resolved[0].body.code == 'sucess' && 
+                resolved[1].body.code == 'sucess' &&
+                resolved[2].body.code == 'sucess') {
+
+                if (resolved[0].body.data.disruptions == 'undefined' || resolved[0].body.data.disruptions == null) { // Trains are running ok
+                    outputText = resolved[0].body.data;
                 };
-                outputText = outputText + resolved[1].body.data;
+                if (resolved[0].body.data.disruptions == 'true' && resolved[1].body.data.disruptions == 'true') { // Problem on trains and tube
+                    outputText = 'There are disruptions reported for trains to Charing Cross and the Jubilee line. Please check Southeastern and city mapper for more information.';
+                };
+                if (resolved[0].body.data.disruptions == 'true' && resolved[1].body.data.disruptions == 'false') { // Problems on train only
+                    outputText = 'There are disruptions reported for trains to Charing Cross, however the Jubilee line currently looks ok.';
+                };
+                if (resolved[2].body.data == 'false') { // No 9 bus is ok
+                    outputText = outputText + ' There are no disruptions on the number 9 bus.';
+                } else { // No 9 bus is not ok
+                    outputText = outputText + ' There are reported disruptions on the number 9 bus.';
+                };
                 intentObj.emit(':tell', processResponseText(outputText)); 
             } else {
                 intentObj.emit(':tell', processResponseText(errorMessage)); 
