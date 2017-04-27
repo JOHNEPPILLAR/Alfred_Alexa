@@ -619,26 +619,26 @@ function commuteIntent (intentObj) {
                 resolved[2].body.code == 'sucess' &&
                 resolved[3].body.code == 'sucess') {
 
-                if (resolved[0].body.data.disruptions == null && resolved[2].body.data == 'false') { // CST Trains and Central line are ok
-                    outputText = resolved[0].body.data;
+                if (resolved[0].body.data.disruptions == false && resolved[2].body.data.disruptions == false) { // CST Trains and Central line are ok
+                    outputText = resolved[0].body.data.message;
                 };
-                if (resolved[0].body.data.disruptions == 'true' && // Problem on CST, CHX trains and Jubilee
-                    resolved[1].body.data.disruptions == 'true' &&
-                    resolved[3].body.data == 'true') { 
+                if (resolved[0].body.data.disruptions == true && // Problem on CST, CHX trains and Jubilee
+                    resolved[1].body.data.disruptions == true &&
+                    resolved[3].body.data.disruptions == true) { 
                     outputText = 'There are disruptions reported on all trains and the Jubilee line. I would check Southeastern and city mapper for more information.';
                 };
-                if (resolved[0].body.data.disruptions == 'true' && // Problem on CST, CHX trains. Jubilee line ok
-                    resolved[1].body.data.disruptions == 'true' &&
-                    resolved[3].body.data == 'false') { 
+                if (resolved[0].body.data.disruptions == true && // Problem on CST, CHX trains. Jubilee line ok
+                    resolved[1].body.data.disruptions == true &&
+                    resolved[3].body.data.disruptions == false) { 
                     outputText = 'There are disruptions reported on all trains, so I sugest you get the tube as the Jubilee line look ok. I would check Southeastern and city mapper just in case though.';
                 };
-                if (resolved[0].body.data.disruptions == 'true' && // Problem on CST, CHX is ok
-                    resolved[1].body.data.disruptions == null) { 
+                if (resolved[0].body.data.disruptions == true && // Problem on CST, CHX is ok
+                    resolved[1].body.data.disruptions == false) { 
                     outputText = 'There are disruptions reported on trains to Cannon Street, so I suggest going to Charing Cross today. But I would check Southeastern just in case.';
                 };
-                if (resolved[0].body.data.disruptions == null && // Trains are ok but problem on Central line
-                    resolved[1].body.data.disruptions == null &&
-                    resolved[2].body.data == 'true') { 
+                if (resolved[0].body.data.disruptions == false && // Trains are ok but problem on Central line
+                    resolved[1].body.data.disruptions == false &&
+                    resolved[2].body.data.disruptions == true) { 
                     outputText = 'There are disruptions reported on the central line. I suggest you go to Charing Cross today. But I would check Southeastern just in case.';
                 };
                 intentObj.emit(':tell', processResponseText(outputText)); 
@@ -662,16 +662,16 @@ function commuteIntent (intentObj) {
                 resolved[1].body.code == 'sucess' &&
                 resolved[2].body.code == 'sucess') {
 
-                if (resolved[0].body.data.disruptions == 'undefined' || resolved[0].body.data.disruptions == null) { // Trains are running ok
+                if (resolved[0].body.data.disruptions == false) { // Trains are running ok
                     outputText = resolved[0].body.data;
                 };
-                if (resolved[0].body.data.disruptions == 'true' && resolved[1].body.data.disruptions == 'true') { // Problem on trains and tube
+                if (resolved[0].body.data.disruptions == true && resolved[1].body.data.disruptions == true) { // Problem on trains and tube
                     outputText = 'There are disruptions reported for trains to Charing Cross and the Jubilee line. Please check Southeastern and city mapper for more information.';
                 };
-                if (resolved[0].body.data.disruptions == 'true' && resolved[1].body.data.disruptions == 'false') { // Problems on train only
+                if (resolved[0].body.data.disruptions == true && resolved[1].body.data.disruptions == false) { // Problems on train only
                     outputText = 'There are disruptions reported for trains to Charing Cross, however the Jubilee line currently looks ok.';
                 };
-                if (resolved[2].body.data == 'false') { // No 9 bus is ok
+                if (resolved[2].body.data == false) { // No 9 bus is ok
                     outputText = outputText + ' There are no disruptions on the number 9 bus.';
                 } else { // No 9 bus is not ok
                     outputText = outputText + ' There are reported disruptions on the number 9 bus.';
