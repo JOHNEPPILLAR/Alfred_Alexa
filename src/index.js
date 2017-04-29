@@ -100,6 +100,18 @@ var handlers = {
     'Commute': function() {
         logger.info ('Calling the Commute intent.');
         commuteIntent(this); // Process the intent
+    },
+    'AMAZON.HelpIntent': function () {
+        logger.info ('Calling the help intent.');
+        helpIntent(this); // Process the intent
+    },        
+    'AMAZON.CancelIntent': function () {
+        logger.info ('Calling the Cancel intent.');
+        stopIntent(this); // Process the intent
+    },
+    'AMAZON.StopIntent': function () {
+        logger.info ('Calling the Stop intent.');
+        stopIntent(this); // Process the intent
     }
 };
 
@@ -174,6 +186,28 @@ function UnhandledIntent (intentObj) {
     var errorMessage = 'I seem to have an internal error. I am unable to process your request.';
     logger.info ('No intent match.......');
     intentObj.emit(':tell', processResponseText(errorMessage)); // Send response back to alexa
+};         
+
+// Stop, Cancel 
+function stopIntent (intentObj) {
+    var outputText = '',
+        hour       = new Date().getHours();
+    
+    switch (hour) {
+    case 0: case 1: case 2: case 3: case 4: case 5:
+        outputText = 'OK. Have a pleasant sleep.';
+        break;
+    case 6: case 7: case 8: case 9: case 10: case 11: case 12:
+        outputText = 'OK. Have a pleasant day.';
+    case 13: case 14: case 15: case 16:
+        outputText = 'OK. Have a pleasant afternoon.';
+    case 17: case 18: case 19:
+        outputText = 'OK. Have a pleasant evening.';
+    default:
+        outputText = 'OK. Have a pleasant night.';
+        break;
+    };
+    intentObj.emit(':tell', processResponseText(outputText));
 };         
 
 // Hello
