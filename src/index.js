@@ -1,5 +1,11 @@
 'use strict';
 
+//
+// TO DO
+//
+// Finish off commute intent
+//
+
 const Alexa      = require('alexa-sdk'),
       rp         = require('request-promise'),
       dotenv     = require('dotenv'),
@@ -9,7 +15,7 @@ const Alexa      = require('alexa-sdk'),
 
 dotenv.load() // Load env vars
 
-var baseUrl     = 'http://' + process.env.Alfred_DI_IP + ':' + process.env.Alfred_DI_Port;
+var baseUrl = 'http://' + process.env.Alfred_DI_IP + ':' + process.env.Alfred_DI_Port;
 
 setLogger(); // Configure the logger
 
@@ -77,6 +83,10 @@ var handlers = {
         logger.info ('Calling the Snow intent.');
         snowIntent(this); // Process the intent
     },
+    'Rain': function() {
+        logger.info ('Calling the Rain intent.');
+        rainIntent(this); // Process the intent
+    },
     'Weather': function() {
         logger.info ('Calling the Weather intent.');
         weatherIntent(this); // Process the intent
@@ -119,14 +129,8 @@ var handlers = {
 // Helper functions
 //=========================================================
 function setLogger () {
-    if (process.env.environment == 'live'){
-        // Send logging to a file
-        logger.add(logger.transports.File, { filename: 'Alfred.log', timestamp: function() { return dateFormat(new Date(), "dd mmm yyyy HH:MM")}, colorize: true });
-        logger.remove(logger.transports.Console);
-    } else {
-        logger.remove(logger.transports.Console);
-        logger.add(logger.transports.Console, {timestamp: function() { return dateFormat(new Date(), "dd mmm yyyy HH:MM") }, colorize: true});
-    };
+    logger.remove(logger.transports.Console);
+    logger.add(logger.transports.Console, {timestamp: function() { return dateFormat(new Date(), "dd mmm yyyy HH:MM") }, colorize: true});
 };
 
 // Call a remote API to get data
@@ -175,6 +179,12 @@ function addDays (date, amount) {
         d.setTime(t);
     };
     return d;
+};
+
+function getByDate (jsonObj, date) {
+    return jsonObj.filter(function (el) {
+        return dateFormat(el, "yyyy-mm-dd") == dateFormat(date, "yyyy-mm-dd");
+    });
 };
 
 //=========================================================
@@ -424,6 +434,117 @@ function snowIntent (intentObj) {
     .catch(function(err) { // if error return a nice message
         intentObj.emit(':tell', processResponseText(errorMessage)); 
         logger.error('snow: ' + err);
+    });
+};
+
+// Will it rain
+function rainIntent (intentObj) {
+    var errorMessage      = 'I seem to have an internal error. I am unable to tell you if it will rain.',
+        location          = intentObj.event.request.intent.slots.location.value,
+        when              = intentObj.event.request.intent.slots.when.value,
+        dateTomorrow      = dateFormat(addDays(new Date(), 1), "yyyy-mm-dd"),
+        dateToday         = dateFormat(Date.now(), "yyyy-mm-dd"),
+        willItRainMessage = '',
+        locationMsg       = '.';
+
+    if (typeof location !== 'undefined' && location !== null) {
+        locationMsg = ' in ' + location + '.'; 
+        location    = '&location=' + location;
+    } else {
+        location = '';
+    };
+
+    // Construct url
+    var url = baseUrl + '/weather/willitrain?app_key=' + process.env.app_key + location;
+
+    if (typeof when !== 'undefined' && when !== null) {
+        switch (when) {
+            case dateToday:
+                when = 'today';
+                break;
+            case dateTomorrow:
+                when = 'tomorrow';
+                break;
+            default:
+                when = 'today';
+            break;
+        };
+    } else {
+        when = 'today';
+    };
+
+    // Call the url and process data
+    requestAPIdata(url) // Call the api
+    .then(function(apiObj) {
+        var apiData = apiObj.body.data;
+        if (apiObj.body.code == 'sucess') { // if sucess process the data
+            switch (when) {
+                case 'today':
+                    if (!apiData.going_to_rain){ // If the volume of rain is >0 it's raining
+                        willItRainMessage = 'It\'s not going to rain today' + locationMsg;
+                    } else {
+                        var rainToday = getByDate(apiData.rain_days,dateToday),
+                            now       = false,
+                            morning   = false,
+                            afternoon = false,
+                            evening   = false,
+                            night     = false;
+                        rainToday.forEach(function(value) {
+                            var ObjHR     = dateFormat(value, 'HH'),
+                                CurrentHR = dateFormat(new Date(), 'HH');
+                            if (ObjHR > CurrentHR) {
+                                if(ObjHR >= 5 && ObjHR <= 11) morning = true
+                                else if(ObjHR >= 12 && ObjHR <=16) afternoon = true 
+                                else if(ObjHR >= 17 && ObjHR <=21) evening = true
+                                else night = true;
+                            } else now = true;
+                        });
+                        if (now) willItRainMessage = 'It\'s raining right now.';
+                        if (night) willItRainMessage = 'It\'s going to rain to night.';
+                        if (evening) willItRainMessage = 'It\'s going to rain this evening.';
+                        if (afternoon) willItRainMessage = 'It\'s going to rain this afternoon.';
+                        if (morning) willItRainMessage = 'It\'s going to rain this morning.';
+                    };
+                    break;
+                case 'tomorrow':
+                    if (!apiData.going_to_rain){ // If the volume of rain is >0 it's raining
+                        willItRainMessage = 'It\'s not going to rain tomorrow' + locationMsg;
+                    } else {
+                        var rainTomorrow  = getByDate(apiData.rain_days,dateTomorrow),
+                            morning       = false,
+                            afternoon     = false,
+                            evening       = false,
+                            night         = false;
+                        rainTomorrow.forEach(function(value) {
+                            var ObjHR = dateFormat(value, 'HH');
+                            if(ObjHR >= 5 && ObjHR <= 11) morning = true
+                            else if(ObjHR >= 12 && ObjHR <=16) afternoon = true 
+                            else if(ObjHR >= 17 && ObjHR <=21) evening = true
+                            else night = true;
+                        });
+                        if (night) willItRainMessage = 'It\'s going to rain tomorrow night.';
+                        if (evening) willItRainMessage = 'It\'s going to rain tomorrow evening.';
+                        if (afternoon) willItRainMessage = 'It\'s going to rain tomorrow afternoon.';
+                        if (morning) willItRainMessage = 'It\'s going to rain tomorrow morning.';
+                        if (morning && afternoon && evening && night) willItRainMessage = 'It\'s going to rain all day tomorrow.';
+                    };
+                    break;
+                default:
+                    if (apiData.going_to_rain){ // If the volume of rain is >0 it's raining
+                        willItRainMessage = 'In the next 5 days it is going to rain' + locationMsg;
+                    } else {
+                        willItRainMessage = 'In the next 5 days it is not going to rain' + locationMsg;
+                    };
+                    break;
+            };
+            intentObj.emit(':tell', processResponseText(willItRainMessage)); 
+        } else { // if error return a nice message
+            intentObj.emit(':tell', processResponseText(errorMessage)); 
+        };
+    })
+    .catch(function(err) { // if error return a nice message
+        intentObj.emit(':tell', processResponseText(errorMessage)); 
+        logger.error('rain: ' + err);
     });
 };
 
