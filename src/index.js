@@ -863,7 +863,7 @@ function TVOffIntent (intentObj) {
 
     switch (deviceID) {
         case process.env.livingRoomDeviceID:
-            var url = baseUrl + '/tv/tvoff?app_key=' + process.env.app_key; // Construct url
+            var url = baseUrl + '/tv/turnoff?app_key=' + process.env.app_key; // Construct url
             // Call the url and process data
             requestAPIdata(url) // Call the api
             .then(function(apiObj) {
