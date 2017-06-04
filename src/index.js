@@ -111,6 +111,10 @@ var handlers = {
         logger.info ('Calling the Commute intent.');
         commuteIntent(this); // Process the intent
     },
+    'TVOff': function() {
+        logger.info ('Calling the TV off intent.');
+        TVOffIntent(this); // Process the intent
+    },
     'AMAZON.HelpIntent': function () {
         logger.info ('Calling the help intent.');
         helpIntent(this); // Process the intent
@@ -193,9 +197,9 @@ function getByDate (jsonObj, date) {
 
 // UnhandledIntent
 function UnhandledIntent (intentObj) {
-    var errorMessage = 'I seem to have an internal error. I am unable to process your request.';
-    logger.info ('No intent match.......');
-    intentObj.emit(':tell', processResponseText(errorMessage)); // Send response back to alexa
+    var errorMessage = 'I do not know that type of request. Please try again.';
+    logger.info ('No intent matched.......');
+    intentObj.emit(':tell', errorMessage); // Send response back to alexa
 };         
 
 // Stop, Cancel 
@@ -745,7 +749,7 @@ function tubeStatusIntent (intentObj) {
     });
 };
 
-// Tube status
+// Commute status
 function commuteIntent (intentObj) {
     var errorMessage    = 'I seem to have an internal error. I am unable to work out your commute.',
         promises        = [],
@@ -844,3 +848,39 @@ function commuteIntent (intentObj) {
     };
 };
 
+// TV off
+function TVOffIntent (intentObj) {
+    const errorMessage = 'I seem to have an internal error. I am unable to turn off the TV.'
+          
+    var room     = null,
+        deviceID = null;
+
+    try {
+        deviceID = intentObj.event.context.System.device.deviceId;
+    } catch (error) {
+        logger.info ('No deviceID information in Alexa payload')
+    };
+
+    switch (deviceID) {
+        case process.env.livingRoomDeviceID:
+            var url = baseUrl + '/tv/tvoff?app_key=' + process.env.app_key; // Construct url
+            // Call the url and process data
+            requestAPIdata(url) // Call the api
+            .then(function(apiObj) {
+                var apiData = apiObj.body.data;
+                if (apiObj.body.code == 'sucess') { // if sucess process the data
+                    intentObj.emit(':tell', processResponseText(apiData)); 
+                } else { // if error return a nice message
+                    intentObj.emit(':tell', processResponseText(errorMessage)); 
+                };
+            })
+            .catch(function(err) { // if error return a nice message
+                intentObj.emit(':tell', processResponseText(errorMessage)); 
+                logger.error('TV off error: ' + err);
+            });
+            break;
+        default:
+            intentObj.emit(':tell', processResponseText('Sorry. I cannot do that because there is not a TV in this room.'));
+            break;
+    };
+};
